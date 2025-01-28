@@ -170,6 +170,12 @@ def generate_response(from_user, text):
         res = [TextMessage(text="ありがとうございます。下のリンクからフォローをお願いします。https://www.instagram.com/kobe_archery/")]
     elif "ホームページ" in text:
         res = [TextMessage(text="こちらが私たちのホームページです。https://kobe-archery.main.jp")]
+    elif "部員数" in text:
+        res = [TextMessage(text="私たちは現在35人で活動しています。")]
+    elif "練習頻度" in text or "練習回数" in text:
+        res = [TextMessage(text="私たちは週3回練習しています。")]
+    elif "練習場所" in text:
+        res = [TextMessage(text="私たちは鶴甲第一キャンパス体育館横のアーチェリー場で練習しています。")]
     else:
         # AIを使って返信を生成
         res = [TextMessage(text=get_ai_response(from_user, text))]
