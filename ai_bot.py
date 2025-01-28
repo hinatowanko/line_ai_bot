@@ -90,7 +90,7 @@ def get_ai_response(from_user, text):
     # 「留学生」が含まれる場合、system_role を変更
     if "留学生" in text or "りゅうがくせい" in text:
         # system_role を変更
-        chat_history[0] = {
+        new_role = {
             "role": "system",
             "content": [
                 {
@@ -99,6 +99,10 @@ def get_ai_response(from_user, text):
                 },
             ],
         }
+        if len(chat_history) == 0:
+            chat_history.append(new_role)
+        else:
+            chat_history[0] = new_role
 
         # 変更後の chat_history を確認
         print("Updated system_role: ", chat_history[0])
