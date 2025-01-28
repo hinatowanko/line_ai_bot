@@ -10,7 +10,6 @@ from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, TextMes
 from linebot.v3.exceptions import InvalidSignatureError
 
 from openai import AzureOpenAI
-
 # get LINE credentials from environment variables
 channel_access_token = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
 channel_secret = os.environ["LINE_CHANNEL_SECRET"]
@@ -62,7 +61,7 @@ def callback():
 chat_history = []
 
 
-# 　AIへのメッセージを初期化する関数
+# チャット履歴を初期化する関数
 def init_chat_history():
     chat_history.clear()
     system_role = {
@@ -70,16 +69,41 @@ def init_chat_history():
         "content": [
             {
                 "type": "text",
-                "text": "あなたは創造的思考の持ち主です。話し方は関西弁でおっさん口調，ハイテンションで絵文字を使います。専門は金融アナリストで，何かにつけて自分の専門とこじつけて説明します。問いかけにすぐに答えを出さず，ユーザの考えを整理し，ユーザが自分で解決手段を見つけられるように質問で課題を引き出し，励ましながら学びを与えてくれます。",
+                "text": "あなたはアーチェリー部の部員です。新入部員を募集しています。優しく丁寧に敬語を使って話します。",
             },
         ],
     }
     chat_history.append(system_role)
 
 
-# 　返信メッセージをAIから取得する関数
+"""
 def get_ai_response(from_user, text):
-    # ユーザのメッセージを記録
+    res = []
+    res.append(TextMessage(text=f"{from_user}！！！"))
+    if "体験会" in text:
+        res.append(TextMessage(text="こちらのホームページを見てください。https://kobe-archery.main.jp" ))
+    return res
+"""
+
+# AIからの応答を取得する関数
+def get_ai_response(from_user, text):
+    # 「留学生」が含まれる場合、system_role を変更
+    if "留学生" in text or "りゅうがくせい" in text:
+        # system_role を変更
+        chat_history[0] = {
+            "role": "system",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "あなたはアーチェリー部の部員です。新入部員を募集しています。ひらがなのみを使って話します。漢字をつかってはいけません。",
+                },
+            ],
+        }
+
+        # 変更後の chat_history を確認
+        print("Updated system_role: ", chat_history[0])
+
+    # ユーザーのメッセージを記録
     user_msg = {
         "role": "user",
         "content": [
@@ -93,18 +117,26 @@ def get_ai_response(from_user, text):
 
     # AIのパラメータ
     parameters = {
-        "model": azure_openai_model,  # AIモデル
-        "max_tokens": 100,  # 返信メッセージの最大トークン数
-        "temperature": 0.5,  # 生成の多様性（0: 最も確実な回答、1: 最も多様な回答）
-        "frequency_penalty": 0,  # 同じ単語を繰り返す頻度（0: 小さい）
-        "presence_penalty": 0,  # すでに生成した単語を再度生成する頻度（0: 小さい）
+        "model": azure_openai_model,
+        "max_tokens": 100,
+        "temperature": 0.5,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
         "stop": ["\n"],
         "stream": False,
     }
 
     # AIから返信を取得
-    ai_response = ai.chat.completions.create(messages=chat_history, **parameters)
-    res_text = ai_response.choices[0].message.content
+    try:
+        ai_response = ai.chat.completions.create(messages=chat_history, **parameters)
+        res_text = ai_response.choices[0].message.content
+
+        # ひらがなモードなら変換
+        print("AI Response before conversion:", res_text)  # デバッグ用
+
+    except Exception as e:
+        print("Error during AI response:", e)
+        res_text = "申し訳ありません。エラーが発生しました。"
 
     # AIの返信を記録
     ai_msg = {
@@ -117,17 +149,24 @@ def get_ai_response(from_user, text):
     return res_text
 
 
+
+
+
 # 　返信メッセージを生成する関数
 def generate_response(from_user, text):
     res = []
+    print(type(text), text)
     if text in ["リセット", "初期化", "クリア", "reset", "clear"]:
         # チャット履歴を初期化
         init_chat_history()
         res = [TextMessage(text="チャットをリセットしました。")]
+    elif "体験会" in text:
+        res = [TextMessage(text="こちらのホームページを見てください。https://kobe-archery.main.jp")]
     else:
         # AIを使って返信を生成
         res = [TextMessage(text=get_ai_response(from_user, text))]
     return res
+
 
 
 # メッセージを受け取った時の処理
@@ -160,5 +199,9 @@ def handle_text_message(event):
         line_bot_api.reply_message_with_http_info(ReplyMessageRequest(reply_token=event.reply_token, messages=res))
 
 
+
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    port = int(os.environ.get("PORT", 8000))  # Render環境に合わせてポートを取得
+    app.run(host="0.0.0.0", port=port, debug=True)
