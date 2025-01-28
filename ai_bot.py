@@ -165,7 +165,11 @@ def generate_response(from_user, text):
         init_chat_history()
         res = [TextMessage(text="チャットをリセットしました。")]
     elif "体験会" in text:
-        res = [TextMessage(text="こちらのホームページを見てください。https://kobe-archery.main.jp")]
+        res = [TextMessage(text="ありがとうございます。こちらのformからご希望の日程を回答してください。https://forms.gle/oS7LgHz2Bbd3tGR67")]
+    elif "インスタグラム" in text:
+        res = [TextMessage(text="ありがとうございます。下のリンクからフォローをお願いします。https://www.instagram.com/kobe_archery/")]
+    elif "ホームページ" in text:
+        res = [TextMessage(text="こちらが私たちのホームページです。https://kobe-archery.main.jp")]
     else:
         # AIを使って返信を生成
         res = [TextMessage(text=get_ai_response(from_user, text))]
